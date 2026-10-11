@@ -1,0 +1,6 @@
+﻿# 构建产物
+*.obj
+*.pdb
+*.ilk
+qt/build/
+qt/dist/

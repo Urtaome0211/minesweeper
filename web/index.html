@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>扫雷 - 现代网页版</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="page">
+
+  <main class="card" id="card">
+    <!-- 菜单栏 -->
+    <div class="menubar">
+      <div class="menu" data-menu="game">
+        <button class="menu-title" type="button">游戏</button>
+        <div class="menu-panel">
+          <button class="menu-item" type="button" data-act="new">新游戏<span class="shortcut">F2</span></button>
+          <div class="menu-sep"></div>
+          <button class="menu-item" type="button" data-act="beginner"><span class="check"></span>初级<span class="shortcut">9×9 · 10 雷</span></button>
+          <button class="menu-item" type="button" data-act="intermediate"><span class="check"></span>中级<span class="shortcut">16×16 · 40 雷</span></button>
+          <button class="menu-item" type="button" data-act="expert"><span class="check"></span>高级<span class="shortcut">16×30 · 99 雷</span></button>
+          <button class="menu-item" type="button" data-act="custom"><span class="check"></span>自定义…</button>
+        </div>
+      </div>
+      <div class="menu" data-menu="help">
+        <button class="menu-title" type="button">帮助</button>
+        <div class="menu-panel">
+          <button class="menu-item" type="button" data-act="about">关于 扫雷…</button>
+        </div>
+      </div>
+      <div class="difficulty" id="difficultyLabel">初级 · 9×9 · 10 雷</div>
+    </div>
+
+    <!-- 头部：计数器 / 笑脸 / 计时器 -->
+    <div class="header">
+      <div class="counter" id="mineCounter" title="剩余雷数"></div>
+      <button class="smiley" id="smiley" type="button" title="重新开始" aria-label="重新开始">
+        <svg viewBox="0 0 42 42" aria-hidden="true">
+          <defs>
+            <radialGradient id="faceGrad" cx="50%" cy="38%" r="70%">
+              <stop offset="0%" stop-color="#ffe08a"/>
+              <stop offset="60%" stop-color="#fbbf24"/>
+              <stop offset="100%" stop-color="#f59e0b"/>
+            </radialGradient>
+          </defs>
+          <g class="face-normal">
+            <circle cx="21" cy="21" r="17" fill="url(#faceGrad)" stroke="#b45309" stroke-width="1.5"/>
+            <circle cx="15" cy="17" r="2.2" fill="#1f2937"/>
+            <circle cx="27" cy="17" r="2.2" fill="#1f2937"/>
+            <path d="M14 25 Q21 31 28 25" fill="none" stroke="#1f2937" stroke-width="2.2" stroke-linecap="round"/>
+          </g>
+          <g class="face-surprised">
+            <circle cx="21" cy="21" r="17" fill="url(#faceGrad)" stroke="#b45309" stroke-width="1.5"/>
+            <circle cx="15" cy="17" r="2.2" fill="#1f2937"/>
+            <circle cx="27" cy="17" r="2.2" fill="#1f2937"/>
+            <circle cx="21" cy="26" r="3.4" fill="#1f2937"/>
+          </g>
+          <g class="face-dead">
+            <circle cx="21" cy="21" r="17" fill="url(#faceGrad)" stroke="#b45309" stroke-width="1.5"/>
+            <path d="M12.5 14.5 L17.5 19.5 M17.5 14.5 L12.5 19.5" stroke="#1f2937" stroke-width="2.2" stroke-linecap="round"/>
+            <path d="M24.5 14.5 L29.5 19.5 M29.5 14.5 L24.5 19.5" stroke="#1f2937" stroke-width="2.2" stroke-linecap="round"/>
+            <path d="M15 27 Q21 23 27 27" fill="none" stroke="#1f2937" stroke-width="2.2" stroke-linecap="round"/>
+          </g>
+          <g class="face-cool">
+            <circle cx="21" cy="21" r="17" fill="url(#faceGrad)" stroke="#b45309" stroke-width="1.5"/>
+            <path d="M11 16 h7 v5.5 a1 1 0 0 1 -1 1 h-5 a1 1 0 0 1 -1 -1 z" fill="#1f2937"/>
+            <path d="M31 16 h-7 v5.5 a1 1 0 0 0 1 1 h5 a1 1 0 0 0 1 -1 z" fill="#1f2937"/>
+            <path d="M19.5 19 h3" stroke="#1f2937" stroke-width="2"/>
+            <path d="M14.5 26.5 Q21 32 27.5 26.5" fill="none" stroke="#1f2937" stroke-width="2.2" stroke-linecap="round"/>
+          </g>
+        </svg>
+      </button>
+      <div class="counter" id="timeCounter" title="用时（秒）"></div>
+    </div>
+
+    <!-- 棋盘 -->
+    <div class="board-wrap">
+      <div class="board" id="board"></div>
+    </div>
+
+    <div class="hint">左键翻开 · 右键插旗 · 数字上左右同按快速翻开 · F2 新游戏</div>
+  </main>
+
+  <footer class="footer">现代网页版扫雷 · 致敬 Windows 7 经典</footer>
+</div>
+
+<!-- 图标库（SVG symbol，被游戏格引用；用 width/height=0 隐藏，不能用 display:none） -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="ic-flag" viewBox="0 0 24 24">
+    <line x1="12" y1="4" x2="12" y2="20" stroke="#b91c1c" stroke-width="2.2" stroke-linecap="round"/>
+    <line x1="7" y1="20" x2="17" y2="20" stroke="#b91c1c" stroke-width="2.4" stroke-linecap="round"/>
+    <path d="M12 4 L20.5 8 L12 12 Z" fill="#ef4444" stroke="#b91c1c" stroke-width="1" stroke-linejoin="round"/>
+  </symbol>
+  <symbol id="ic-mine" viewBox="0 0 24 24">
+    <g stroke="currentColor" stroke-width="2" stroke-linecap="round">
+      <line x1="12" y1="12" x2="12" y2="3.5"/>
+      <line x1="12" y1="12" x2="12" y2="20.5"/>
+      <line x1="12" y1="12" x2="3.5" y2="12"/>
+      <line x1="12" y1="12" x2="20.5" y2="12"/>
+      <line x1="12" y1="12" x2="6" y2="6"/>
+      <line x1="12" y1="12" x2="18" y2="18"/>
+      <line x1="12" y1="12" x2="18" y2="6"/>
+      <line x1="12" y1="12" x2="6" y2="18"/>
+    </g>
+    <circle cx="12" cy="12" r="5.6" fill="currentColor"/>
+  </symbol>
+  <symbol id="ic-wrong" viewBox="0 0 24 24">
+    <path d="M7.5 7.5 L16.5 16.5 M16.5 7.5 L7.5 16.5" stroke="#dc2626" stroke-width="3" stroke-linecap="round"/>
+  </symbol>
+</svg>
+
+<!-- 自定义难度对话框 -->
+<div class="overlay hidden" id="customOverlay">
+  <div class="dialog" id="customDialog">
+    <div class="dialog-title">自定义难度</div>
+    <div class="dialog-form">
+      <label>行数（5 – 40）
+        <input id="inRows" type="number" min="5" max="40" value="16" inputmode="numeric">
+      </label>
+      <label>列数（5 – 60）
+        <input id="inCols" type="number" min="5" max="60" value="16" inputmode="numeric">
+      </label>
+      <label>雷数
+        <input id="inMines" type="number" min="1" value="40" inputmode="numeric">
+      </label>
+    </div>
+    <div class="dialog-error" id="customError"></div>
+    <div class="dialog-actions">
+      <button class="btn" id="customOk" type="button">确定</button>
+      <button class="btn ghost" id="customCancel" type="button">取消</button>
+    </div>
+  </div>
+</div>
+
+<!-- 关于对话框 -->
+<div class="overlay hidden" id="aboutOverlay">
+  <div class="dialog" id="aboutDialog">
+    <div class="dialog-title">关于 扫雷</div>
+    <div class="dialog-text">
+      <p class="big">扫雷 —— 现代网页版</p>
+      <p>经典扫雷的网页复刻：圆角、渐变与流畅动画。<br>
+         原生 HTML / CSS / JavaScript 实现，无任何依赖。</p>
+      <p>左键翻开，右键插旗，<br>在数字上左右同按可快速翻开。</p>
+      <p class="small">本项目还包括 Win32 原版与 Qt 6 像素级还原版。</p>
+    </div>
+    <div class="dialog-actions">
+      <button class="btn" id="aboutOk" type="button">确定</button>
+    </div>
+  </div>
+</div>
+
+<script src="game.js"></script>
+</body>
+</html>
